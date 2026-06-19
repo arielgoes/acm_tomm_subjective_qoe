@@ -24,8 +24,25 @@ create table if not exists public.responses (
     is_correct      boolean,
     pairs_version   text,
     pairs_hash      text,
-    user_agent      text
+    user_agent      text,
+
+    -- Reject malformed/junk inserts at the database. Because the publishable key
+    -- is public, anyone can attempt an INSERT; these CHECKs ensure only
+    -- well-formed rows are accepted. Legit submissions from the app always pass.
+    constraint score_a_range    check (score_a between 1 and 5),
+    constraint score_b_range    check (score_b between 1 and 5),
+    constraint which_real_valid check (which_real in ('None','Both','Video A','Video B')),
+    constraint game_valid       check (game in ('Forza','Fortnite','Kombat')),
+    constraint bw_valid         check (bandwidth_mbit in (2,4,6,8,10))
 );
+
+-- If the table already exists without these constraints, add them with:
+--   alter table public.responses
+--     add constraint score_a_range    check (score_a between 1 and 5),
+--     add constraint score_b_range    check (score_b between 1 and 5),
+--     add constraint which_real_valid check (which_real in ('None','Both','Video A','Video B')),
+--     add constraint game_valid       check (game in ('Forza','Fortnite','Kombat')),
+--     add constraint bw_valid         check (bandwidth_mbit in (2,4,6,8,10));
 
 -- Supabase has two access layers and BOTH are required:
 --   1. GRANT  -> whether the anon role can reach the table via the Data/REST API
