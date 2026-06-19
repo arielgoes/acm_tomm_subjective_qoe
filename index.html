@@ -206,6 +206,8 @@
 
         .required-indicator { color: #ff4444; margin-left: 3px; }
 
+        .enter-hint { margin-left: 12px; font-size: 13px; color: #888; }
+
         .save-status {
             text-align: center;
             margin-top: 12px;
@@ -319,6 +321,7 @@
 
         <div style="text-align:center; margin-top: 25px;">
             <button id="nextButton" disabled>Next</button>
+            <span class="enter-hint">or press Enter &#8629;</span>
         </div>
         <div class="save-status" id="saveStatus"></div>
     </div>
@@ -433,6 +436,17 @@
 
         startButton.addEventListener("click", startEvaluation);
         nextButton.onclick = onNext;   // single handler (reassigned for retry)
+
+        // Press Enter to advance, but only when all mandatory fields are filled
+        // (i.e. when the Next/Finish button is enabled) and we're mid-evaluation.
+        document.addEventListener("keydown", function (e) {
+            if (e.key !== "Enter") return;
+            if (evaluationSection.style.display !== "block") return;
+            if (nextButton.disabled) return;
+            if (document.activeElement === nextButton) return;  // let native click fire once
+            e.preventDefault();
+            nextButton.click();
+        });
         setupStarRating(starsA, v => { ratingA = v; checkNextButton(); });
         setupStarRating(starsB, v => { ratingB = v; checkNextButton(); });
         setupOptionButtons(realVideoOptions, v => { whichReal = v; checkNextButton(); });
