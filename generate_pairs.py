@@ -6,7 +6,10 @@ For each (game, bandwidth) we pair the real CGReplay clip with its synthetic
 exist, so the frontend never references a missing video.
 
   real  = {bw}Mbit_Loss0_{game}.mp4
-  synth = {bw}Mbit_Loss0_interpolated_frames_rife_1600_900_{game}.mp4
+  synth = {bw}Mbit_Loss0_interpolated_frames_rife_{w}_{h}_{game}.mp4
+
+The synth resolution token ({w}_{h}, e.g. 1280_720 or 1600_900) is matched
+generically so the actual encode resolution can vary.
 
 Loss1 and reference_* videos are ignored.
 """
@@ -27,7 +30,7 @@ WEB_PREFIX = "videos"
 _GAME_ALT = "|".join(GAMES)
 REAL_RE = re.compile(rf"^(\d+)Mbit_Loss0_({_GAME_ALT})\.mp4$")
 SYNTH_RE = re.compile(
-    rf"^(\d+)Mbit_Loss0_interpolated_frames_rife_1600_900_({_GAME_ALT})\.mp4$"
+    rf"^(\d+)Mbit_Loss0_interpolated_frames_rife_\d+_\d+_({_GAME_ALT})\.mp4$"
 )
 
 

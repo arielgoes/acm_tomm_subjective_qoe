@@ -29,7 +29,7 @@ are real?"** (`None / Both / Video A / Video B`).
 For each `(game, bandwidth)`:
 
 - real  = `{bw}Mbit_Loss0_{game}.mp4`
-- synth = `{bw}Mbit_Loss0_interpolated_frames_rife_1600_900_{game}.mp4`
+- synth = `{bw}Mbit_Loss0_interpolated_frames_rife_{w}_{h}_{game}.mp4` (resolution token `{w}_{h}`, e.g. `1280_720`, matched generically)
 
 A pair appears in `pairs.json` only when **both** files exist. `Loss1` and
 `reference_*` videos are ignored. Games: Forza, Fortnite, Kombat. Bandwidths:
