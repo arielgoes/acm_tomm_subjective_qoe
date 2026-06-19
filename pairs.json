@@ -1,28 +1,112 @@
 {
-  "version": "1.0.1781895398",
-  "generated_at": "2026-06-19T18:56:38.108365+00:00",
-  "hash": "21e9b814bbc054f4",
+  "version": "1.0.1781902218",
+  "generated_at": "2026-06-19T20:50:18.212735+00:00",
+  "hash": "b615bb70072a145b",
   "pairs": [
+    {
+      "id": "2Mbit_Fortnite",
+      "game": "Fortnite",
+      "bandwidth_mbit": 2,
+      "real": "videos/2Mbit_Loss0_Fortnite.mp4",
+      "synth": "videos/2Mbit_Loss0_interpolated_frames_rife_1280_720_Fortnite.mp4"
+    },
+    {
+      "id": "2Mbit_Forza",
+      "game": "Forza",
+      "bandwidth_mbit": 2,
+      "real": "videos/2Mbit_Loss0_Forza.mp4",
+      "synth": "videos/2Mbit_Loss0_interpolated_frames_rife_1280_720_Forza.mp4"
+    },
+    {
+      "id": "2Mbit_Kombat",
+      "game": "Kombat",
+      "bandwidth_mbit": 2,
+      "real": "videos/2Mbit_Loss0_Kombat.mp4",
+      "synth": "videos/2Mbit_Loss0_interpolated_frames_rife_1280_720_Kombat.mp4"
+    },
     {
       "id": "4Mbit_Fortnite",
       "game": "Fortnite",
       "bandwidth_mbit": 4,
       "real": "videos/4Mbit_Loss0_Fortnite.mp4",
-      "synth": "videos/4Mbit_Loss0_interpolated_frames_rife_1600_900_Fortnite.mp4"
+      "synth": "videos/4Mbit_Loss0_interpolated_frames_rife_1280_720_Fortnite.mp4"
     },
     {
       "id": "4Mbit_Forza",
       "game": "Forza",
       "bandwidth_mbit": 4,
       "real": "videos/4Mbit_Loss0_Forza.mp4",
-      "synth": "videos/4Mbit_Loss0_interpolated_frames_rife_1600_900_Forza.mp4"
+      "synth": "videos/4Mbit_Loss0_interpolated_frames_rife_1280_720_Forza.mp4"
     },
     {
       "id": "4Mbit_Kombat",
       "game": "Kombat",
       "bandwidth_mbit": 4,
       "real": "videos/4Mbit_Loss0_Kombat.mp4",
-      "synth": "videos/4Mbit_Loss0_interpolated_frames_rife_1600_900_Kombat.mp4"
+      "synth": "videos/4Mbit_Loss0_interpolated_frames_rife_1280_720_Kombat.mp4"
+    },
+    {
+      "id": "6Mbit_Fortnite",
+      "game": "Fortnite",
+      "bandwidth_mbit": 6,
+      "real": "videos/6Mbit_Loss0_Fortnite.mp4",
+      "synth": "videos/6Mbit_Loss0_interpolated_frames_rife_1280_720_Fortnite.mp4"
+    },
+    {
+      "id": "6Mbit_Forza",
+      "game": "Forza",
+      "bandwidth_mbit": 6,
+      "real": "videos/6Mbit_Loss0_Forza.mp4",
+      "synth": "videos/6Mbit_Loss0_interpolated_frames_rife_1280_720_Forza.mp4"
+    },
+    {
+      "id": "6Mbit_Kombat",
+      "game": "Kombat",
+      "bandwidth_mbit": 6,
+      "real": "videos/6Mbit_Loss0_Kombat.mp4",
+      "synth": "videos/6Mbit_Loss0_interpolated_frames_rife_1280_720_Kombat.mp4"
+    },
+    {
+      "id": "8Mbit_Fortnite",
+      "game": "Fortnite",
+      "bandwidth_mbit": 8,
+      "real": "videos/8Mbit_Loss0_Fortnite.mp4",
+      "synth": "videos/8Mbit_Loss0_interpolated_frames_rife_1280_720_Fortnite.mp4"
+    },
+    {
+      "id": "8Mbit_Forza",
+      "game": "Forza",
+      "bandwidth_mbit": 8,
+      "real": "videos/8Mbit_Loss0_Forza.mp4",
+      "synth": "videos/8Mbit_Loss0_interpolated_frames_rife_1280_720_Forza.mp4"
+    },
+    {
+      "id": "8Mbit_Kombat",
+      "game": "Kombat",
+      "bandwidth_mbit": 8,
+      "real": "videos/8Mbit_Loss0_Kombat.mp4",
+      "synth": "videos/8Mbit_Loss0_interpolated_frames_rife_1280_720_Kombat.mp4"
+    },
+    {
+      "id": "10Mbit_Fortnite",
+      "game": "Fortnite",
+      "bandwidth_mbit": 10,
+      "real": "videos/10Mbit_Loss0_Fortnite.mp4",
+      "synth": "videos/10Mbit_Loss0_interpolated_frames_rife_1280_720_Fortnite.mp4"
+    },
+    {
+      "id": "10Mbit_Forza",
+      "game": "Forza",
+      "bandwidth_mbit": 10,
+      "real": "videos/10Mbit_Loss0_Forza.mp4",
+      "synth": "videos/10Mbit_Loss0_interpolated_frames_rife_1280_720_Forza.mp4"
+    },
+    {
+      "id": "10Mbit_Kombat",
+      "game": "Kombat",
+      "bandwidth_mbit": 10,
+      "real": "videos/10Mbit_Loss0_Kombat.mp4",
+      "synth": "videos/10Mbit_Loss0_interpolated_frames_rife_1280_720_Kombat.mp4"
     }
   ]
 }
