@@ -52,7 +52,10 @@ create table if not exists public.responses (
 -- of the project's Data API default-grant setting).
 grant insert on table public.responses to anon;
 
--- Enable Row Level Security and allow ONLY inserts for the anonymous role.
+-- Enable Row Level Security. Anon may INSERT (submit) and SELECT (read), but
+-- never UPDATE or DELETE. This study collects no PII -- only a random
+-- participant id, scores, the real/synth answer, filenames, and version hashes
+-- -- so raw responses are published openly.
 alter table public.responses enable row level security;
 
 drop policy if exists "anon insert responses" on public.responses;
@@ -62,8 +65,17 @@ create policy "anon insert responses"
     to anon
     with check (true);
 
--- No select/update/delete policy => participants cannot read or modify data.
--- (We deliberately do NOT grant select/update/delete to anon either.)
+-- Public read of raw responses (open data).
+grant select on table public.responses to anon;
+drop policy if exists "anon read responses" on public.responses;
+create policy "anon read responses"
+    on public.responses
+    for select
+    to anon
+    using (true);
+
+-- No update/delete policy or grant => participants still cannot modify or delete
+-- data; the table stays append-only, but is now publicly readable.
 
 -- ---------------------------------------------------------------------------
 -- API keys (current Supabase model):
