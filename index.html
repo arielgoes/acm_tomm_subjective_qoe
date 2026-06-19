@@ -628,7 +628,7 @@
                     // is never lost; let the participant retry the upload.
                     saveStatus.className = "save-status error";
                     saveStatus.textContent =
-                        "Could not reach the server (saved locally). Please retry.";
+                        "Save failed (kept locally): " + err.message + " — please retry.";
                     nextButton.disabled = false;
                     nextButton.textContent = "Retry";
                     nextButton.onclick = () => attemptSave(row);
@@ -657,7 +657,10 @@
                 }),
                 body: JSON.stringify(row),
             }).then(resp => {
-                if (!resp.ok) throw new Error(`Supabase insert failed: ${resp.status}`);
+                if (resp.ok) return;
+                return resp.text().catch(() => "").then(detail => {
+                    throw new Error(`HTTP ${resp.status}${detail ? " — " + detail : ""}`);
+                });
             });
         }
 
