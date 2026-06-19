@@ -19,7 +19,7 @@ import io
 import os
 import sys
 
-TABLE = "responses"
+TABLE = "responses_acm_tomm_subjective_qoe"
 PAGE_SIZE = 1000
 
 # Preferred column order (schema order). Any unexpected keys are appended.

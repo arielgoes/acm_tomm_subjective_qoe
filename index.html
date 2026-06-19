@@ -348,7 +348,7 @@
         // Prefer the current publishable key; fall back to a legacy anon key.
         const SUPABASE_KEY = window.SUPABASE_PUBLISHABLE_KEY || window.SUPABASE_ANON_KEY || "";
         const ONLINE_MODE = !!(SUPABASE_URL && SUPABASE_KEY);
-        const RESPONSES_TABLE = "responses";
+        const RESPONSES_TABLE = "responses_acm_tomm_subjective_qoe";
 
         function supabaseHeaders(extra) {
             const h = Object.assign({ "apikey": SUPABASE_KEY }, extra || {});

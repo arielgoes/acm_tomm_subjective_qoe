@@ -1,12 +1,13 @@
 -- Supabase schema for the ACM TOMM subjective QoE study.
 -- Paste this once into the Supabase SQL editor (Project -> SQL Editor -> New query).
 --
--- It creates an append-only `responses` table: anonymous participants can INSERT
+-- It creates an append-only `responses_acm_tomm_subjective_qoe` table: anonymous
+-- participants can INSERT
 -- rows from the browser using the public anon key, but cannot read, update, or
 -- delete anything. You (the project owner) read the data from the dashboard or
 -- with export_responses.py using the service_role key.
 
-create table if not exists public.responses (
+create table if not exists public.responses_acm_tomm_subjective_qoe (
     id              bigint generated always as identity primary key,
     created_at      timestamptz not null default now(),
     participant_id  text        not null,
@@ -37,7 +38,7 @@ create table if not exists public.responses (
 );
 
 -- If the table already exists without these constraints, add them with:
---   alter table public.responses
+--   alter table public.responses_acm_tomm_subjective_qoe
 --     add constraint score_a_range    check (score_a between 1 and 5),
 --     add constraint score_b_range    check (score_b between 1 and 5),
 --     add constraint which_real_valid check (which_real in ('None','Both','Video A','Video B')),
@@ -50,26 +51,26 @@ create table if not exists public.responses (
 -- A table created via SQL is not guaranteed to be reachable by anon unless the
 -- privilege is granted, so we grant INSERT explicitly (reproducible regardless
 -- of the project's Data API default-grant setting).
-grant insert on table public.responses to anon;
+grant insert on table public.responses_acm_tomm_subjective_qoe to anon;
 
 -- Enable Row Level Security. Anon may INSERT (submit) and SELECT (read), but
 -- never UPDATE or DELETE. This study collects no PII -- only a random
 -- participant id, scores, the real/synth answer, filenames, and version hashes
 -- -- so raw responses are published openly.
-alter table public.responses enable row level security;
+alter table public.responses_acm_tomm_subjective_qoe enable row level security;
 
-drop policy if exists "anon insert responses" on public.responses;
+drop policy if exists "anon insert responses" on public.responses_acm_tomm_subjective_qoe;
 create policy "anon insert responses"
-    on public.responses
+    on public.responses_acm_tomm_subjective_qoe
     for insert
     to anon
     with check (true);
 
 -- Public read of raw responses (open data).
-grant select on table public.responses to anon;
-drop policy if exists "anon read responses" on public.responses;
+grant select on table public.responses_acm_tomm_subjective_qoe to anon;
+drop policy if exists "anon read responses" on public.responses_acm_tomm_subjective_qoe;
 create policy "anon read responses"
-    on public.responses
+    on public.responses_acm_tomm_subjective_qoe
     for select
     to anon
     using (true);
@@ -85,7 +86,7 @@ create policy "anon read responses"
 --     service_role JWT keys also still work. Keep it server-side only.
 --
 -- Verify after setup (run here as the owner -> you CAN read):
---   select count(*) from public.responses;
+--   select count(*) from public.responses_acm_tomm_subjective_qoe;
 -- The anon insert path is verified by submitting a pair in the app or with the
 -- curl commands in the README; anon reads return nothing by design.
 -- ---------------------------------------------------------------------------
@@ -94,7 +95,7 @@ create policy "anon read responses"
 -- Public aggregate view for the online stats dashboard (stats.html).
 -- Exposes ONLY summary numbers per (game, bandwidth) -- never raw responses.
 -- It runs as the view owner (security_invoker = false) so it can aggregate the
--- full table while anon, which has NO select on public.responses, can still
+-- full table while anon, which has NO select on public.responses_acm_tomm_subjective_qoe, can still
 -- read these aggregates. Only the columns listed below are ever visible.
 -- ---------------------------------------------------------------------------
 create or replace view public.response_stats
@@ -106,7 +107,7 @@ select
     round(avg(case when video_a_kind = 'real'  then score_a else score_b end)::numeric, 3) as mean_mos_real,
     round(avg(case when video_a_kind = 'synth' then score_a else score_b end)::numeric, 3) as mean_mos_synth,
     round(avg(case when is_correct then 1 else 0 end)::numeric, 4) as detection_accuracy
-from public.responses
+from public.responses_acm_tomm_subjective_qoe
 group by game, bandwidth_mbit
 order by bandwidth_mbit, game;
 

@@ -66,7 +66,7 @@ ID.
 ### Key boundary — `saveResponse(row)`
 
 The only place that knows about storage:
-- If `window.SUPABASE_URL` / `SUPABASE_ANON_KEY` are set → `POST /rest/v1/responses`
+- If `window.SUPABASE_URL` / `SUPABASE_ANON_KEY` are set → `POST /rest/v1/responses_acm_tomm_subjective_qoe`
   with `Prefer: return=minimal`; on failure, mirror to localStorage and surface a
   retry — never lose a completed pair.
 - If not set (local testing) → append to a localStorage array; thank-you screen
