@@ -78,14 +78,24 @@ create policy "anon insert responses"
 -- curl commands in the README; anon reads return nothing by design.
 -- ---------------------------------------------------------------------------
 
--- Make sure the anon role actually has the INSERT privilege (Supabase usually
--- grants this by default; this line makes the setup reproducible regardless).
-grant insert on table public.responses to anon;
+-- ---------------------------------------------------------------------------
+-- Public aggregate view for the online stats dashboard (stats.html).
+-- Exposes ONLY summary numbers per (game, bandwidth) -- never raw responses.
+-- It runs as the view owner (security_invoker = false) so it can aggregate the
+-- full table while anon, which has NO select on public.responses, can still
+-- read these aggregates. Only the columns listed below are ever visible.
+-- ---------------------------------------------------------------------------
+create or replace view public.response_stats
+    with (security_invoker = false) as
+select
+    game,
+    bandwidth_mbit,
+    count(*)::int as n,
+    round(avg(case when video_a_kind = 'real'  then score_a else score_b end)::numeric, 3) as mean_mos_real,
+    round(avg(case when video_a_kind = 'synth' then score_a else score_b end)::numeric, 3) as mean_mos_synth,
+    round(avg(case when is_correct then 1 else 0 end)::numeric, 4) as detection_accuracy
+from public.responses
+group by game, bandwidth_mbit
+order by bandwidth_mbit, game;
 
--- ---------------------------------------------------------------------------
--- Verify after setup (run in the SQL editor):
---   select count(*) from public.responses;          -- you (owner) can read
--- The browser/anon path is verified by submitting a pair in the app, or with
--- the curl commands in the README. Reads via the anon key return nothing by
--- design (append-only).
--- ---------------------------------------------------------------------------
+grant select on public.response_stats to anon;

@@ -14,7 +14,8 @@ are real?"** (`None / Both / Video A / Video B`).
 | File | Role |
 |---|---|
 | `index.html` | Landing → evaluation → thank-you. Vanilla JS, no build step. |
-| `config.js` | Supabase URL + anon key. Empty = **local mode** (CSV download). |
+| `stats.html` | Online dashboard — live charts from the `response_stats` view. |
+| `config.js` | Supabase URL + publishable key. Empty = **local mode** (CSV download). |
 | `pairs.json` | **Auto-generated** manifest of available pairs. |
 | `generate_pairs.py` | Scans `videos/`, writes `pairs.json`. |
 | `supabase_schema.sql` | Creates the append-only `responses` table + RLS policy. |
@@ -90,6 +91,18 @@ python export_responses.py                    # -> responses_export.csv
 The **secret** key (`sb_secret_…`, or a legacy `service_role` JWT) bypasses RLS so
 the script can read the table. Never put it in `config.js` or any client-side
 file. Set it via the environment (`.env` is git-ignored).
+
+## Online stats dashboard (`stats.html`)
+
+`stats.html` renders live charts (Chart.js) of mean MOS (real vs synth) and
+detection accuracy, broken down by bandwidth and game, plus an aggregate table.
+It reads a **public aggregate view** so individual responses are never exposed —
+only the summary numbers.
+
+Enable it by running the `response_stats` view section of `supabase_schema.sql`
+(already included if you ran the whole file). It grants `select` on the view —
+and only the view — to `anon`. The page is linked from the landing page's
+**View Statistics Dashboard** button. No data yet → it shows "No responses yet."
 
 ## Deployment (GitHub Pages)
 

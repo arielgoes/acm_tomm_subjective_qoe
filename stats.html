@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QoE Statistics Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --primary-color: #bb86fc;
+            --secondary-color: #03dac6;
+            --surface-color: #1e1e1e;
+            --border-color: #333333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 20px;
+            background-color: var(--surface-color);
+            border-radius: 12px;
+        }
+        a { color: var(--secondary-color); }
+        .summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            flex: 1;
+            min-width: 160px;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+        }
+        .stat-card .value {
+            font-size: 30px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .stat-card .label { font-size: 13px; color: #bbb; }
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 20px;
+        }
+        .chart-box {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px;
+        }
+        .chart-box h3 { margin-top: 0; color: var(--secondary-color); font-size: 16px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        th, td { padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--border-color); }
+        th { background-color: #262626; color: var(--primary-color); }
+        .message { text-align: center; padding: 40px; font-size: 18px; color: #bbb; }
+        button {
+            padding: 10px 18px; background-color: var(--primary-color); color: var(--bg-color);
+            border: none; border-radius: 8px; cursor: pointer; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>QoE Statistics Dashboard</h1>
+        <p>Aggregate results — real vs synthetic (RIFE) video quality &amp; detection</p>
+        <p><a href="index.html">&larr; Back to evaluation</a> &nbsp;|&nbsp;
+           <button onclick="loadStats()">Refresh</button></p>
+    </div>
+
+    <div id="message" class="message">Loading…</div>
+
+    <div id="dashboard" style="display:none;">
+        <div class="summary" id="summary"></div>
+        <div class="charts">
+            <div class="chart-box"><h3>Mean MOS by bandwidth (real vs synth)</h3><canvas id="mosByBw"></canvas></div>
+            <div class="chart-box"><h3>Mean MOS by game (real vs synth)</h3><canvas id="mosByGame"></canvas></div>
+            <div class="chart-box"><h3>Detection accuracy by bandwidth</h3><canvas id="accByBw"></canvas></div>
+            <div class="chart-box"><h3>Detection accuracy by game</h3><canvas id="accByGame"></canvas></div>
+        </div>
+        <table id="rawTable"></table>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script>
+        const SUPABASE_URL = (window.SUPABASE_URL || "").replace(/\/+$/, "");
+        const SUPABASE_KEY = window.SUPABASE_PUBLISHABLE_KEY || window.SUPABASE_ANON_KEY || "";
+        const STATS_VIEW = "response_stats";
+        const REAL_COLOR = "#bb86fc";
+        const SYNTH_COLOR = "#03dac6";
+        const charts = {};
+
+        function supabaseHeaders() {
+            const h = { "apikey": SUPABASE_KEY };
+            if (SUPABASE_KEY.startsWith("eyJ")) h["Authorization"] = `Bearer ${SUPABASE_KEY}`;
+            return h;
+        }
+
+        const num = v => (v === null || v === undefined ? null : Number(v));
+
+        function showMessage(text) {
+            document.getElementById("message").textContent = text;
+            document.getElementById("message").style.display = "block";
+            document.getElementById("dashboard").style.display = "none";
+        }
+
+        function loadStats() {
+            if (!SUPABASE_URL || !SUPABASE_KEY) {
+                showMessage("Online stats need Supabase configured in config.js.");
+                return;
+            }
+            document.getElementById("message").textContent = "Loading…";
+            document.getElementById("message").style.display = "block";
+            fetch(`${SUPABASE_URL}/rest/v1/${STATS_VIEW}?select=*`, { headers: supabaseHeaders() })
+                .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+                .then(rows => {
+                    rows = rows.map(r => ({
+                        game: r.game,
+                        bandwidth_mbit: num(r.bandwidth_mbit),
+                        n: num(r.n) || 0,
+                        mean_mos_real: num(r.mean_mos_real),
+                        mean_mos_synth: num(r.mean_mos_synth),
+                        detection_accuracy: num(r.detection_accuracy),
+                    }));
+                    if (rows.length === 0) { showMessage("No responses yet."); return; }
+                    render(rows);
+                })
+                .catch(err => {
+                    console.error(err);
+                    showMessage("Could not load stats: " + err.message +
+                        " (has the response_stats view been created in Supabase?)");
+                });
+        }
+
+        // Weighted aggregation of the per-cell view rows up to one dimension.
+        function aggregateBy(rows, keyField) {
+            const map = new Map();
+            for (const r of rows) {
+                const k = r[keyField];
+                if (!map.has(k)) map.set(k, { n: 0, realNum: 0, realDen: 0, synthNum: 0, synthDen: 0, accNum: 0, accDen: 0 });
+                const a = map.get(k);
+                a.n += r.n;
+                if (r.mean_mos_real !== null) { a.realNum += r.mean_mos_real * r.n; a.realDen += r.n; }
+                if (r.mean_mos_synth !== null) { a.synthNum += r.mean_mos_synth * r.n; a.synthDen += r.n; }
+                if (r.detection_accuracy !== null) { a.accNum += r.detection_accuracy * r.n; a.accDen += r.n; }
+            }
+            return [...map.entries()].map(([k, a]) => ({
+                key: k,
+                n: a.n,
+                mos_real: a.realDen ? a.realNum / a.realDen : null,
+                mos_synth: a.synthDen ? a.synthNum / a.synthDen : null,
+                accuracy: a.accDen ? a.accNum / a.accDen : null,
+            }));
+        }
+
+        function makeChart(id, type, labels, datasets, yMax) {
+            if (charts[id]) charts[id].destroy();
+            charts[id] = new Chart(document.getElementById(id), {
+                type,
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: "#ddd" } } },
+                    scales: {
+                        x: { ticks: { color: "#ddd" }, grid: { color: "#333" } },
+                        y: { beginAtZero: true, suggestedMax: yMax, ticks: { color: "#ddd" }, grid: { color: "#333" } },
+                    },
+                },
+            });
+        }
+
+        function render(rows) {
+            // Summary (weighted overall)
+            const all = aggregateBy(rows, "game").reduce((acc, r) => {
+                acc.n += r.n;
+                if (r.mos_real !== null) { acc.rNum += r.mos_real * r.n; acc.rDen += r.n; }
+                if (r.mos_synth !== null) { acc.sNum += r.mos_synth * r.n; acc.sDen += r.n; }
+                if (r.accuracy !== null) { acc.aNum += r.accuracy * r.n; acc.aDen += r.n; }
+                return acc;
+            }, { n: 0, rNum: 0, rDen: 0, sNum: 0, sDen: 0, aNum: 0, aDen: 0 });
+
+            const f2 = x => (x === null ? "—" : x.toFixed(2));
+            const pct = x => (x === null ? "—" : (x * 100).toFixed(1) + "%");
+            document.getElementById("summary").innerHTML = `
+                <div class="stat-card"><div class="value">${all.n}</div><div class="label">responses</div></div>
+                <div class="stat-card"><div class="value">${f2(all.rDen ? all.rNum / all.rDen : null)}</div><div class="label">mean MOS — real</div></div>
+                <div class="stat-card"><div class="value">${f2(all.sDen ? all.sNum / all.sDen : null)}</div><div class="label">mean MOS — synth</div></div>
+                <div class="stat-card"><div class="value">${pct(all.aDen ? all.aNum / all.aDen : null)}</div><div class="label">detection accuracy</div></div>`;
+
+            // By bandwidth
+            const byBw = aggregateBy(rows, "bandwidth_mbit").sort((a, b) => a.key - b.key);
+            const bwLabels = byBw.map(r => r.key + " Mbit");
+            makeChart("mosByBw", "bar", bwLabels, [
+                { label: "Real", data: byBw.map(r => r.mos_real), backgroundColor: REAL_COLOR },
+                { label: "Synth", data: byBw.map(r => r.mos_synth), backgroundColor: SYNTH_COLOR },
+            ], 5);
+            makeChart("accByBw", "bar", bwLabels, [
+                { label: "Accuracy", data: byBw.map(r => r.accuracy), backgroundColor: SYNTH_COLOR },
+            ], 1);
+
+            // By game
+            const byGame = aggregateBy(rows, "game").sort((a, b) => String(a.key).localeCompare(b.key));
+            const gameLabels = byGame.map(r => r.key);
+            makeChart("mosByGame", "bar", gameLabels, [
+                { label: "Real", data: byGame.map(r => r.mos_real), backgroundColor: REAL_COLOR },
+                { label: "Synth", data: byGame.map(r => r.mos_synth), backgroundColor: SYNTH_COLOR },
+            ], 5);
+            makeChart("accByGame", "bar", gameLabels, [
+                { label: "Accuracy", data: byGame.map(r => r.accuracy), backgroundColor: SYNTH_COLOR },
+            ], 1);
+
+            // Raw aggregate table
+            const sorted = rows.slice().sort((a, b) =>
+                a.bandwidth_mbit - b.bandwidth_mbit || String(a.game).localeCompare(b.game));
+            let html = "<tr><th>Game</th><th>Bandwidth</th><th>n</th><th>MOS real</th>" +
+                       "<th>MOS synth</th><th>Accuracy</th></tr>";
+            for (const r of sorted) {
+                html += `<tr><td>${r.game}</td><td>${r.bandwidth_mbit} Mbit</td><td>${r.n}</td>` +
+                        `<td>${f2(r.mean_mos_real)}</td><td>${f2(r.mean_mos_synth)}</td>` +
+                        `<td>${pct(r.detection_accuracy)}</td></tr>`;
+            }
+            document.getElementById("rawTable").innerHTML = html;
+
+            document.getElementById("message").style.display = "none";
+            document.getElementById("dashboard").style.display = "block";
+        }
+
+        loadStats();
+    </script>
+</body>
+</html>
