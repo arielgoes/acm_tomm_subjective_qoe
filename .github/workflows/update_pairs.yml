@@ -1,0 +1,34 @@
+name: Update pairs.json
+
+# Regenerates pairs.json whenever the videos change, so adding the remaining
+# 2/6/8/10 Mbit files needs no code edits -- just drop them in videos/.
+
+on:
+  push:
+    paths:
+      - 'videos/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-pairs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Generate pairs.json
+        run: python generate_pairs.py
+
+      - name: Commit changes if needed
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add pairs.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update pairs.json" && git push)

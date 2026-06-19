@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Quality Evaluation</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --primary-color: #bb86fc;
+            --secondary-color: #03dac6;
+            --surface-color: #1e1e1e;
+            --border-color: #333333;
+            --hover-color: #2a2a2a;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .welcome-section {
+            margin-bottom: 30px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            text-align: center;
+            background-color: var(--surface-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-id-display {
+            font-family: monospace;
+            font-size: 18px;
+            padding: 12px 24px;
+            background-color: var(--hover-color);
+            border-radius: 8px;
+            display: inline-block;
+            margin: 10px 0;
+            border: 1px solid var(--border-color);
+            color: var(--primary-color);
+        }
+
+        .evaluation-section {
+            display: none;
+            margin-bottom: 30px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background-color: var(--surface-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .video-box {
+            flex: 1;
+            min-width: 300px;
+            background-color: var(--hover-color);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-box video {
+            width: 100%;
+            border-radius: 8px;
+            background-color: #000;
+        }
+
+        .video-error {
+            display: none;
+            color: #ff6b6b;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .rating-box {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: var(--hover-color);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .rating-stars {
+            display: flex;
+            justify-content: space-between;
+            max-width: 250px;
+            margin: 10px 0;
+        }
+
+        .star {
+            cursor: pointer;
+            font-size: 28px;
+            color: #666;
+            transition: transform 0.2s, color 0.2s;
+        }
+
+        .star:hover { transform: scale(1.2); }
+        .star.selected { color: var(--primary-color); }
+
+        .question-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: var(--hover-color);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .question-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .option-btn {
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover {
+            background-color: var(--hover-color);
+            transform: translateY(-2px);
+        }
+
+        .option-btn.selected {
+            background-color: var(--primary-color);
+            color: var(--bg-color);
+            border-color: var(--primary-color);
+        }
+
+        button {
+            padding: 12px 24px;
+            background-color: var(--primary-color);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .thank-you {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            font-size: 20px;
+            color: var(--primary-color);
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        .required-indicator { color: #ff4444; margin-left: 3px; }
+
+        .save-status {
+            text-align: center;
+            margin-top: 12px;
+            min-height: 22px;
+            font-size: 14px;
+        }
+        .save-status.error { color: #ff6b6b; }
+        .save-status.ok { color: var(--secondary-color); }
+
+        .loading-indicator {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            color: var(--text-color);
+        }
+
+        .loading-spinner {
+            border: 5px solid var(--surface-color);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        * { transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Video Quality Evaluation</h1>
+        <p>Please evaluate the visual quality of each video pair using a 1-5 scale</p>
+    </div>
+
+    <div class="welcome-section" id="welcomeSection">
+        <h2>Welcome to the Video Quality Evaluation</h2>
+        <p>Your unique participant ID is:</p>
+        <div class="user-id-display" id="userIdDisplay">GENERATING...</div>
+        <p>Please note this ID for your records. You'll need it if you want to reference your evaluation later.</p>
+        <div id="loadingVideos" class="loading-indicator">
+            <div class="loading-spinner"></div>
+            <p>Loading video pairs...</p>
+        </div>
+        <div id="noPairsMessage" style="display:none; color:#ff6b6b; margin: 15px 0;">
+            No video pairs are available yet. Please check back later.
+        </div>
+        <div style="margin-top: 20px;">
+            <button id="startButton" disabled>Start Evaluation</button>
+        </div>
+    </div>
+
+    <div class="evaluation-section" id="evaluationSection">
+        <div class="progress" id="progress"></div>
+        <h2 id="sceneTitle">Evaluate Pair</h2>
+
+        <div class="video-container">
+            <div class="video-box">
+                <h3>Video A</h3>
+                <video id="videoA" controls></video>
+                <div class="video-error" id="errorA">This video failed to load.</div>
+                <div class="rating-box">
+                    <label>Rate Video A (1-5):<span class="required-indicator">*</span></label>
+                    <div class="rating-stars" id="starsA">
+                        <span class="star" data-value="1">&#9733;</span>
+                        <span class="star" data-value="2">&#9733;</span>
+                        <span class="star" data-value="3">&#9733;</span>
+                        <span class="star" data-value="4">&#9733;</span>
+                        <span class="star" data-value="5">&#9733;</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-box">
+                <h3>Video B</h3>
+                <video id="videoB" controls></video>
+                <div class="video-error" id="errorB">This video failed to load.</div>
+                <div class="rating-box">
+                    <label>Rate Video B (1-5):<span class="required-indicator">*</span></label>
+                    <div class="rating-stars" id="starsB">
+                        <span class="star" data-value="1">&#9733;</span>
+                        <span class="star" data-value="2">&#9733;</span>
+                        <span class="star" data-value="3">&#9733;</span>
+                        <span class="star" data-value="4">&#9733;</span>
+                        <span class="star" data-value="5">&#9733;</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="question-section">
+            <div class="question-title">
+                Which videos do you think are real?<span class="required-indicator">*</span>
+            </div>
+            <div class="options-grid" id="realVideoOptions">
+                <div class="option-btn" data-value="None">None</div>
+                <div class="option-btn" data-value="Both">Both</div>
+                <div class="option-btn" data-value="Video A">Video A</div>
+                <div class="option-btn" data-value="Video B">Video B</div>
+            </div>
+        </div>
+
+        <div style="text-align:center; margin-top: 25px;">
+            <button id="nextButton" disabled>Next</button>
+        </div>
+        <div class="save-status" id="saveStatus"></div>
+    </div>
+
+    <div class="thank-you" id="thankYouSection">
+        <h2>Thank You!</h2>
+        <p>Your evaluation has been recorded.</p>
+        <p>Your participant ID: <span id="thankYouUserId"></span></p>
+        <div id="localExport" style="display:none; margin-top: 25px;">
+            <p style="font-size:15px;">Local mode &mdash; download your responses:</p>
+            <button id="downloadCsvButton">Download CSV</button>
+        </div>
+        <div style="margin-top: 25px;">
+            <button onclick="startNewEvaluation()" style="background-color: var(--border-color);">
+                Start New Evaluation
+            </button>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        // ---- Storage config (from config.js; empty => local mode) ----
+        const SUPABASE_URL = (window.SUPABASE_URL || "").replace(/\/+$/, "");
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "";
+        const ONLINE_MODE = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+        const RESPONSES_TABLE = "responses";
+
+        // localStorage keys
+        const LS_PARTICIPANT = "acm_qoe_participant_id";
+        const LS_ROWS = "acm_qoe_local_rows";          // all saved rows (local mode + mirror)
+        const LS_DONE = id => `acm_qoe_done_${id}`;      // completed pair ids for this participant
+
+        // ---- Deterministic per-participant randomization ----
+        function hashStringToSeed(str) {
+            let hash = 5381;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) + hash) + str.charCodeAt(i);
+            }
+            return Math.abs(hash) % 4294967296;
+        }
+        // mulberry32 PRNG
+        function makeRng(seed) {
+            let a = seed >>> 0;
+            return function () {
+                a |= 0; a = (a + 0x6D2B79F5) | 0;
+                let t = Math.imul(a ^ (a >>> 15), 1 | a);
+                t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+        function seededShuffle(arr, rng) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(rng() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+        function generateRandomUserId(length) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let r = '';
+            for (let i = 0; i < length; i++) r += chars.charAt(Math.floor(Math.random() * chars.length));
+            return r;
+        }
+
+        // ---- State ----
+        let userId = localStorage.getItem(LS_PARTICIPANT);
+        if (!userId) {
+            userId = generateRandomUserId(10);
+            localStorage.setItem(LS_PARTICIPANT, userId);
+        }
+        let pairsMeta = { version: "unknown", hash: "unknown" };
+        let orderedPairs = [];   // [{pair, videoAKind, videoBKind, videoAFile, videoBFile}]
+        let currentIndex = 0;
+        let ratingA = 0, ratingB = 0, whichReal = '';
+
+        // ---- DOM ----
+        const welcomeSection = document.getElementById("welcomeSection");
+        const evaluationSection = document.getElementById("evaluationSection");
+        const thankYouSection = document.getElementById("thankYouSection");
+        const userIdDisplay = document.getElementById("userIdDisplay");
+        const thankYouUserId = document.getElementById("thankYouUserId");
+        const startButton = document.getElementById("startButton");
+        const nextButton = document.getElementById("nextButton");
+        const progressIndicator = document.getElementById("progress");
+        const sceneTitle = document.getElementById("sceneTitle");
+        const videoA = document.getElementById("videoA");
+        const videoB = document.getElementById("videoB");
+        const errorA = document.getElementById("errorA");
+        const errorB = document.getElementById("errorB");
+        const starsA = document.getElementById("starsA");
+        const starsB = document.getElementById("starsB");
+        const realVideoOptions = document.getElementById("realVideoOptions");
+        const loadingIndicator = document.getElementById("loadingVideos");
+        const noPairsMessage = document.getElementById("noPairsMessage");
+        const saveStatus = document.getElementById("saveStatus");
+
+        userIdDisplay.textContent = userId;
+        thankYouUserId.textContent = userId;
+
+        startButton.addEventListener("click", startEvaluation);
+        nextButton.onclick = onNext;   // single handler (reassigned for retry)
+        setupStarRating(starsA, v => { ratingA = v; checkNextButton(); });
+        setupStarRating(starsB, v => { ratingB = v; checkNextButton(); });
+        setupOptionButtons(realVideoOptions, v => { whichReal = v; checkNextButton(); });
+        document.getElementById("downloadCsvButton").addEventListener("click", downloadCsv);
+
+        init();
+
+        function init() {
+            fetch('pairs.json', { cache: 'no-cache' })
+                .then(r => { if (!r.ok) throw new Error('pairs.json not found'); return r.json(); })
+                .then(data => {
+                    pairsMeta = { version: data.version || "unknown", hash: data.hash || "unknown" };
+                    buildOrderedPairs(data.pairs || []);
+                    loadingIndicator.style.display = "none";
+                    if (orderedPairs.length === 0) {
+                        noPairsMessage.style.display = "block";
+                    } else {
+                        startButton.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    loadingIndicator.style.display = "none";
+                    noPairsMessage.style.display = "block";
+                });
+        }
+
+        function buildOrderedPairs(pairs) {
+            const seed = hashStringToSeed(userId);
+            const orderRng = makeRng(seed);
+            const shuffled = seededShuffle(pairs, orderRng);
+            // Per-pair side decision uses an independent stream seeded from id+pairId.
+            orderedPairs = shuffled.map(pair => {
+                const sideRng = makeRng(hashStringToSeed(userId + "|" + pair.id));
+                const realIsA = sideRng() >= 0.5;
+                return {
+                    pair,
+                    videoAKind: realIsA ? "real" : "synth",
+                    videoBKind: realIsA ? "synth" : "real",
+                    videoAFile: realIsA ? pair.real : pair.synth,
+                    videoBFile: realIsA ? pair.synth : pair.real,
+                };
+            });
+        }
+
+        function getDoneSet() {
+            try { return new Set(JSON.parse(localStorage.getItem(LS_DONE(userId)) || "[]")); }
+            catch (e) { return new Set(); }
+        }
+        function markDone(pairId) {
+            const s = getDoneSet(); s.add(pairId);
+            localStorage.setItem(LS_DONE(userId), JSON.stringify([...s]));
+        }
+
+        function startEvaluation() {
+            welcomeSection.style.display = "none";
+            evaluationSection.style.display = "block";
+            currentIndex = 0;
+            advanceToNextUnfinished();
+        }
+
+        function advanceToNextUnfinished() {
+            const done = getDoneSet();
+            while (currentIndex < orderedPairs.length &&
+                   done.has(orderedPairs[currentIndex].pair.id)) {
+                currentIndex++;
+            }
+            if (currentIndex >= orderedPairs.length) { finishEvaluation(); return; }
+            loadCurrentPair();
+        }
+
+        function loadCurrentPair() {
+            const item = orderedPairs[currentIndex];
+            progressIndicator.textContent = `Pair ${currentIndex + 1} of ${orderedPairs.length}`;
+            sceneTitle.textContent = `Evaluate ${item.pair.game} @ ${item.pair.bandwidth_mbit} Mbit`;
+
+            errorA.style.display = "none";
+            errorB.style.display = "none";
+            setVideo(videoA, item.videoAFile, errorA);
+            setVideo(videoB, item.videoBFile, errorB);
+
+            resetInputs();
+            nextButton.textContent =
+                (currentIndex === orderedPairs.length - 1) ? "Finish" : "Next";
+        }
+
+        function setVideo(el, src, errEl) {
+            el.onerror = () => { errEl.style.display = "block"; };
+            el.innerHTML = `<source src="${src}" type="video/mp4">Your browser cannot play this video.`;
+            el.autoplay = true; el.loop = true; el.muted = true;
+            el.load();
+        }
+
+        function resetInputs() {
+            document.querySelectorAll(".star").forEach(s => s.classList.remove("selected"));
+            document.querySelectorAll(".option-btn").forEach(b => b.classList.remove("selected"));
+            ratingA = 0; ratingB = 0; whichReal = '';
+            nextButton.disabled = true;
+            saveStatus.className = "save-status";
+            saveStatus.textContent = "";
+        }
+
+        function setupStarRating(container, callback) {
+            const stars = container.querySelectorAll(".star");
+            stars.forEach(star => {
+                star.addEventListener("click", function () {
+                    const value = parseInt(this.getAttribute("data-value"));
+                    stars.forEach(s => {
+                        s.classList.toggle("selected",
+                            parseInt(s.getAttribute("data-value")) <= value);
+                    });
+                    callback(value);
+                });
+            });
+        }
+
+        function setupOptionButtons(container, callback) {
+            container.querySelectorAll(".option-btn").forEach(button => {
+                button.addEventListener("click", function () {
+                    container.querySelectorAll(".option-btn").forEach(b => b.classList.remove("selected"));
+                    this.classList.add("selected");
+                    callback(this.getAttribute("data-value"));
+                });
+            });
+        }
+
+        function checkNextButton() {
+            nextButton.disabled = !(ratingA > 0 && ratingB > 0 && whichReal !== '');
+        }
+
+        function computeIsCorrect(whichReal, aKind, bKind) {
+            const aReal = aKind === "real", bReal = bKind === "real";
+            switch (whichReal) {
+                case "Video A": return aReal && !bReal;
+                case "Video B": return bReal && !aReal;
+                case "Both":    return aReal && bReal;
+                case "None":    return !aReal && !bReal;
+                default:        return false;
+            }
+        }
+
+        function buildRow() {
+            const item = orderedPairs[currentIndex];
+            return {
+                created_at: new Date().toISOString(),
+                participant_id: userId,
+                pair_id: item.pair.id,
+                game: item.pair.game,
+                bandwidth_mbit: item.pair.bandwidth_mbit,
+                pair_index: currentIndex,
+                video_a_kind: item.videoAKind,
+                video_b_kind: item.videoBKind,
+                video_a_file: item.videoAFile,
+                video_b_file: item.videoBFile,
+                score_a: ratingA,
+                score_b: ratingB,
+                which_real: whichReal,
+                is_correct: computeIsCorrect(whichReal, item.videoAKind, item.videoBKind),
+                pairs_version: pairsMeta.version,
+                pairs_hash: pairsMeta.hash,
+                user_agent: navigator.userAgent,
+            };
+        }
+
+        function onNext() {
+            attemptSave(buildRow());
+        }
+
+        function attemptSave(row) {
+            nextButton.disabled = true;
+            nextButton.textContent = "Saving...";
+            saveStatus.className = "save-status";
+            saveStatus.textContent = "";
+            saveResponse(row)
+                .then(() => onSaved(row))
+                .catch(err => {
+                    console.error(err);
+                    // The row is already mirrored locally by saveResponse, so it
+                    // is never lost; let the participant retry the upload.
+                    saveStatus.className = "save-status error";
+                    saveStatus.textContent =
+                        "Could not reach the server (saved locally). Please retry.";
+                    nextButton.disabled = false;
+                    nextButton.textContent = "Retry";
+                    nextButton.onclick = () => attemptSave(row);
+                });
+        }
+
+        function onSaved(row) {
+            markDone(row.pair_id);
+            nextButton.onclick = onNext;   // restore normal handler
+            currentIndex++;
+            advanceToNextUnfinished();
+        }
+
+        // ---- The ONLY place that knows about storage ----
+        // Always keep a local copy first (dedup by participant+pair), then, in
+        // online mode, POST to Supabase. Retries re-POST without duplicating the
+        // local mirror.
+        function saveResponse(row) {
+            appendLocalRowOnce(row);
+            if (!ONLINE_MODE) return Promise.resolve();
+            return fetch(`${SUPABASE_URL}/rest/v1/${RESPONSES_TABLE}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": SUPABASE_ANON_KEY,
+                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                    "Prefer": "return=minimal",
+                },
+                body: JSON.stringify(row),
+            }).then(resp => {
+                if (!resp.ok) throw new Error(`Supabase insert failed: ${resp.status}`);
+            });
+        }
+
+        function appendLocalRowOnce(row) {
+            let rows = [];
+            try { rows = JSON.parse(localStorage.getItem(LS_ROWS) || "[]"); } catch (e) {}
+            const i = rows.findIndex(r =>
+                r.participant_id === row.participant_id && r.pair_id === row.pair_id);
+            if (i >= 0) rows[i] = row; else rows.push(row);
+            localStorage.setItem(LS_ROWS, JSON.stringify(rows));
+        }
+
+        function finishEvaluation() {
+            evaluationSection.style.display = "none";
+            thankYouSection.style.display = "block";
+            if (!ONLINE_MODE) {
+                document.getElementById("localExport").style.display = "block";
+            }
+        }
+
+        function downloadCsv() {
+            let rows = [];
+            try { rows = JSON.parse(localStorage.getItem(LS_ROWS) || "[]"); } catch (e) {}
+            if (rows.length === 0) { alert("No local responses to export."); return; }
+            const cols = Object.keys(rows[0]);
+            const esc = v => {
+                const s = String(v ?? "");
+                return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+            };
+            const csv = [cols.join(",")]
+                .concat(rows.map(r => cols.map(c => esc(r[c])).join(",")))
+                .join("\n");
+            const blob = new Blob([csv], { type: "text/csv" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "qoe_responses_local.csv";
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        function startNewEvaluation() {
+            localStorage.removeItem(LS_DONE(userId));
+            localStorage.removeItem(LS_PARTICIPANT);
+            location.reload();
+        }
+        window.startNewEvaluation = startNewEvaluation;
+    </script>
+</body>
+</html>

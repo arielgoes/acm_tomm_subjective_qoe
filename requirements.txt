@@ -1,0 +1,5 @@
+# Runtime: only needed for export_responses.py (talking to Supabase).
+requests>=2.31
+
+# Dev/testing
+pytest>=8.0

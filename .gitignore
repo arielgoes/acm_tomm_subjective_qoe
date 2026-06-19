@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Exported data (regenerate with export_responses.py)
+responses_export.csv
+*_local.csv
+
+# Local secrets, if you choose to keep the service key in a dotenv
+.env

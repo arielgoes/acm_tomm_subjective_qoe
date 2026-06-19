@@ -1,0 +1,28 @@
+{
+  "version": "1.0.1781895398",
+  "generated_at": "2026-06-19T18:56:38.108365+00:00",
+  "hash": "21e9b814bbc054f4",
+  "pairs": [
+    {
+      "id": "4Mbit_Fortnite",
+      "game": "Fortnite",
+      "bandwidth_mbit": 4,
+      "real": "videos/4Mbit_Loss0_Fortnite.mp4",
+      "synth": "videos/4Mbit_Loss0_interpolated_frames_rife_1600_900_Fortnite.mp4"
+    },
+    {
+      "id": "4Mbit_Forza",
+      "game": "Forza",
+      "bandwidth_mbit": 4,
+      "real": "videos/4Mbit_Loss0_Forza.mp4",
+      "synth": "videos/4Mbit_Loss0_interpolated_frames_rife_1600_900_Forza.mp4"
+    },
+    {
+      "id": "4Mbit_Kombat",
+      "game": "Kombat",
+      "bandwidth_mbit": 4,
+      "real": "videos/4Mbit_Loss0_Kombat.mp4",
+      "synth": "videos/4Mbit_Loss0_interpolated_frames_rife_1600_900_Kombat.mp4"
+    }
+  ]
+}
