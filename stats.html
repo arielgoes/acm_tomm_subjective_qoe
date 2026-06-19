@@ -84,7 +84,8 @@
         <h1>QoE Statistics Dashboard</h1>
         <p>Aggregate results — real vs synthetic (RIFE) video quality &amp; detection</p>
         <p><a href="index.html">&larr; Back to evaluation</a> &nbsp;|&nbsp;
-           <button onclick="loadStats()">Refresh</button></p>
+           <button onclick="loadStats()">Refresh</button> &nbsp;
+           <button id="downloadBtn" onclick="downloadAllCsv()">&#11015; Download all responses (CSV)</button></p>
     </div>
 
     <div id="message" class="message">Loading…</div>
@@ -106,6 +107,7 @@
         const SUPABASE_URL = (window.SUPABASE_URL || "").replace(/\/+$/, "");
         const SUPABASE_KEY = window.SUPABASE_PUBLISHABLE_KEY || window.SUPABASE_ANON_KEY || "";
         const STATS_VIEW = "response_stats";
+        const RESPONSES_TABLE = "responses_acm_tomm_subjective_qoe";
         const REAL_COLOR = "#bb86fc";
         const SYNTH_COLOR = "#03dac6";
         const charts = {};
@@ -243,6 +245,58 @@
 
             document.getElementById("message").style.display = "none";
             document.getElementById("dashboard").style.display = "block";
+        }
+
+        // ---- Download all raw responses as CSV (raw read is public) ----
+        const csvEscape = v => {
+            const s = (v === null || v === undefined) ? "" : String(v);
+            return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+        };
+
+        function fetchAllRaw() {
+            const pageSize = 1000;
+            const all = [];
+            function next(offset) {
+                return fetch(`${SUPABASE_URL}/rest/v1/${RESPONSES_TABLE}?select=*&order=id.asc&limit=${pageSize}&offset=${offset}`,
+                             { headers: supabaseHeaders() })
+                    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+                    .then(batch => {
+                        all.push(...batch);
+                        return batch.length < pageSize ? all : next(offset + pageSize);
+                    });
+            }
+            return next(0);
+        }
+
+        function downloadAllCsv() {
+            if (!SUPABASE_URL || !SUPABASE_KEY) {
+                alert("Supabase is not configured in config.js.");
+                return;
+            }
+            const btn = document.getElementById("downloadBtn");
+            const label = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Preparing…";
+            fetchAllRaw()
+                .then(rows => {
+                    if (rows.length === 0) { alert("No responses yet."); return; }
+                    const cols = Object.keys(rows[0]);
+                    const csv = [cols.join(",")]
+                        .concat(rows.map(r => cols.map(c => csvEscape(r[c])).join(",")))
+                        .join("\n");
+                    const blob = new Blob([csv], { type: "text/csv" });
+                    const a = document.createElement("a");
+                    a.href = URL.createObjectURL(blob);
+                    a.download = "qoe_responses.csv";
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Download failed: " + err.message +
+                        " (is public read enabled on the responses table?)");
+                })
+                .finally(() => { btn.disabled = false; btn.textContent = label; });
         }
 
         loadStats();

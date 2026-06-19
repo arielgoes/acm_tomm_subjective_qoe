@@ -18,7 +18,7 @@ are real?"** (`None / Both / Video A / Video B`).
 | `config.js` | Supabase URL + publishable key. Empty = **local mode** (CSV download). |
 | `pairs.json` | **Auto-generated** manifest of available pairs. |
 | `generate_pairs.py` | Scans `videos/`, writes `pairs.json`. |
-| `supabase_schema.sql` | Creates the append-only `responses` table + RLS policy. |
+| `supabase_schema.sql` | Creates the append-only `responses_acm_tomm_subjective_qoe` table + RLS policy. |
 | `export_responses.py` | Pulls all rows from Supabase into a CSV. |
 | `app.py` | Tiny local static server for testing. |
 | `videos/` | The `.mp4` clips. |
@@ -96,13 +96,17 @@ file. Set it via the environment (`.env` is git-ignored).
 
 `stats.html` renders live charts (Chart.js) of mean MOS (real vs synth) and
 detection accuracy, broken down by bandwidth and game, plus an aggregate table.
-It reads a **public aggregate view** so individual responses are never exposed —
-only the summary numbers.
+Charts read the `response_stats` aggregate view; a **Download all responses
+(CSV)** button pulls the full raw table client-side (paginated).
 
-Enable it by running the `response_stats` view section of `supabase_schema.sql`
-(already included if you ran the whole file). It grants `select` on the view —
-and only the view — to `anon`. The page is linked from the landing page's
-**View Statistics Dashboard** button. No data yet → it shows "No responses yet."
+This study publishes raw responses as **open data** — the schema grants `anon`
+both `insert` and `select` on the table (no PII is collected). The table stays
+append-only (no update/delete for `anon`). If you'd rather keep raw data private,
+drop the `anon read responses` policy + `grant select` on the table and the
+dashboard charts still work from the view alone (but the CSV download won't).
+
+The dashboard is linked from the landing page's **View Statistics Dashboard**
+button. No data yet → it shows "No responses yet."
 
 ## Deployment (GitHub Pages)
 
