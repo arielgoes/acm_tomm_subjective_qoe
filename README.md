@@ -62,18 +62,20 @@ pytest -q
 ## Online collection with Supabase
 
 1. Create a free project at <https://supabase.com>.
-2. **SQL Editor → New query →** paste `supabase_schema.sql` → Run. This creates
-   the `responses` table with an **insert-only** policy for anonymous users.
-3. **Project Settings → API**: copy the **Project URL** and the **anon public**
-   key into `config.js`:
+2. **SQL Editor → New query →** paste `supabase_schema.sql` → Run. This grants
+   `anon` INSERT, enables RLS, and adds an **insert-only** policy (both layers are
+   required — a grant controls table access, RLS controls row access).
+3. **Project Settings → API Keys**: copy the **Project URL** and the
+   **publishable** key (`sb_publishable_…`) into `config.js`:
 
    ```js
    window.SUPABASE_URL = "https://xxxx.supabase.co";
-   window.SUPABASE_ANON_KEY = "eyJ...";   // anon public key (safe to expose)
+   window.SUPABASE_PUBLISHABLE_KEY = "sb_publishable_...";  // safe to expose
    ```
 
-   The anon key is meant to be public; with the insert-only RLS policy,
-   participants can only append rows — never read, edit, or delete.
+   The publishable key is meant to be public; with the grant + insert-only RLS
+   policy, participants can only append rows — never read, edit, or delete.
+   (A legacy `anon` JWT key also works — set `window.SUPABASE_ANON_KEY` instead.)
 4. Commit and push. The site posts each pair's response directly to Supabase
    (with a localStorage mirror as backup).
 
@@ -81,12 +83,13 @@ pytest -q
 
 ```bash
 export SUPABASE_URL="https://xxxx.supabase.co"
-export SUPABASE_SERVICE_KEY="<service_role key>"   # Settings → API, keep secret
-python export_responses.py                          # -> responses_export.csv
+export SUPABASE_SECRET_KEY="sb_secret_..."   # Settings → API Keys, keep secret
+python export_responses.py                    # -> responses_export.csv
 ```
 
-The **service_role** key bypasses RLS so the script can read the table. Never put
-it in `config.js` or any client-side file.
+The **secret** key (`sb_secret_…`, or a legacy `service_role` JWT) bypasses RLS so
+the script can read the table. Never put it in `config.js` or any client-side
+file. Set it via the environment (`.env` is git-ignored).
 
 ## Deployment (GitHub Pages)
 

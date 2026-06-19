@@ -338,9 +338,21 @@
     <script>
         // ---- Storage config (from config.js; empty => local mode) ----
         const SUPABASE_URL = (window.SUPABASE_URL || "").replace(/\/+$/, "");
-        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "";
-        const ONLINE_MODE = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+        // Prefer the current publishable key; fall back to a legacy anon key.
+        const SUPABASE_KEY = window.SUPABASE_PUBLISHABLE_KEY || window.SUPABASE_ANON_KEY || "";
+        const ONLINE_MODE = !!(SUPABASE_URL && SUPABASE_KEY);
         const RESPONSES_TABLE = "responses";
+
+        function supabaseHeaders(extra) {
+            const h = Object.assign({ "apikey": SUPABASE_KEY }, extra || {});
+            // Legacy anon keys are JWTs and also belong in the Authorization
+            // header. New publishable keys (sb_publishable_...) must NOT be sent
+            // as a Bearer token, so only add it for JWT-style keys.
+            if (SUPABASE_KEY.startsWith("eyJ")) {
+                h["Authorization"] = `Bearer ${SUPABASE_KEY}`;
+            }
+            return h;
+        }
 
         // localStorage keys
         const LS_PARTICIPANT = "acm_qoe_participant_id";
@@ -621,12 +633,10 @@
             if (!ONLINE_MODE) return Promise.resolve();
             return fetch(`${SUPABASE_URL}/rest/v1/${RESPONSES_TABLE}`, {
                 method: "POST",
-                headers: {
+                headers: supabaseHeaders({
                     "Content-Type": "application/json",
-                    "apikey": SUPABASE_ANON_KEY,
-                    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
                     "Prefer": "return=minimal",
-                },
+                }),
                 body: JSON.stringify(row),
             }).then(resp => {
                 if (!resp.ok) throw new Error(`Supabase insert failed: ${resp.status}`);

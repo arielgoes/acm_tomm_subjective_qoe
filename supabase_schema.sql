@@ -27,6 +27,14 @@ create table if not exists public.responses (
     user_agent      text
 );
 
+-- Supabase has two access layers and BOTH are required:
+--   1. GRANT  -> whether the anon role can reach the table via the Data/REST API
+--   2. RLS    -> which rows that role may read/modify
+-- A table created via SQL is not guaranteed to be reachable by anon unless the
+-- privilege is granted, so we grant INSERT explicitly (reproducible regardless
+-- of the project's Data API default-grant setting).
+grant insert on table public.responses to anon;
+
 -- Enable Row Level Security and allow ONLY inserts for the anonymous role.
 alter table public.responses enable row level security;
 
@@ -37,4 +45,30 @@ create policy "anon insert responses"
     to anon
     with check (true);
 
--- (No select/update/delete policy => participants cannot read or modify data.)
+-- No select/update/delete policy => participants cannot read or modify data.
+-- (We deliberately do NOT grant select/update/delete to anon either.)
+
+-- ---------------------------------------------------------------------------
+-- API keys (current Supabase model):
+--   * Browser/config.js -> PUBLISHABLE key (sb_publishable_...), maps to the
+--     anon role. Legacy anon JWT keys also still work.
+--   * export_responses.py -> SECRET key (sb_secret_...), bypasses RLS. Legacy
+--     service_role JWT keys also still work. Keep it server-side only.
+--
+-- Verify after setup (run here as the owner -> you CAN read):
+--   select count(*) from public.responses;
+-- The anon insert path is verified by submitting a pair in the app or with the
+-- curl commands in the README; anon reads return nothing by design.
+-- ---------------------------------------------------------------------------
+
+-- Make sure the anon role actually has the INSERT privilege (Supabase usually
+-- grants this by default; this line makes the setup reproducible regardless).
+grant insert on table public.responses to anon;
+
+-- ---------------------------------------------------------------------------
+-- Verify after setup (run in the SQL editor):
+--   select count(*) from public.responses;          -- you (owner) can read
+-- The browser/anon path is verified by submitting a pair in the app, or with
+-- the curl commands in the README. Reads via the anon key return nothing by
+-- design (append-only).
+-- ---------------------------------------------------------------------------

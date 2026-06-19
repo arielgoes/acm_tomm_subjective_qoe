@@ -68,3 +68,16 @@ def test_extra_keys_appended_sorted():
     cols = ex.order_columns([{"id": 1, "zeta": 1, "alpha": 2}])
     assert cols[:len(ex.COLUMNS)] == ex.COLUMNS
     assert cols[len(ex.COLUMNS):] == ["alpha", "zeta"]
+
+
+def test_auth_headers_new_secret_key_no_bearer():
+    h = ex.auth_headers("sb_secret_abc123")
+    assert h["apikey"] == "sb_secret_abc123"
+    assert "Authorization" not in h
+
+
+def test_auth_headers_legacy_jwt_uses_bearer():
+    jwt = "eyJhbGciOiJIUzI1Ni'"
+    h = ex.auth_headers(jwt)
+    assert h["apikey"] == jwt
+    assert h["Authorization"] == f"Bearer {jwt}"
